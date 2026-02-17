@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <div class="flex items-center justify-between">
+        <div x-data class="flex items-center justify-between">
             <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Proyectos</h2>
             <button @click="$dispatch('open-modal', 'create-project')"
                     class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition">
@@ -12,7 +12,7 @@
         </div>
     </x-slot>
 
-    <div class="py-8">
+    <div x-data class="py-8">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-5">
 
             {{-- Flash --}}
