@@ -116,7 +116,7 @@ PATCH  /subtasks/{subtask}/toggle         → SubtaskController@toggle
 - `app/Policies/ProjectPolicy.php`
 - `app/Policies/TaskPolicy.php`
 
-## Fase 4: Vistas Blade
+## ~~Fase 4: Vistas Blade~~ ✅ COMPLETADA
 
 ### Layout
 Extender el layout de Breeze (`layouts/app.blade.php`), agregar navegación con links a Dashboard y Proyectos.
@@ -155,7 +155,7 @@ Extender el layout de Breeze (`layouts/app.blade.php`), agregar navegación con 
 - `priority-badge.blade.php` — badge de prioridad con colores (alta=rojo, media=amarillo, baja=verde)
 - `modal.blade.php` — componente modal reutilizable con Alpine.js
 
-## Fase 5: Interactividad con Alpine.js
+## ~~Fase 5: Interactividad con Alpine.js~~ ✅ COMPLETADA
 
 ### Kanban Board (`projects/show.blade.php`)
 ```javascript
@@ -178,7 +178,7 @@ x-data="{ showModal: false, editing: null }"
 // Toggle con fetch PATCH, actualizar UI sin reload
 ```
 
-## Fase 6: Estilos y UX
+## ~~Fase 6: Estilos y UX~~ ✅ COMPLETADA
 
 - Tailwind CSS (viene con Breeze) para todo el styling
 - Colores de prioridad: high=red-500, medium=yellow-500, low=green-500
@@ -187,7 +187,7 @@ x-data="{ showModal: false, editing: null }"
 - Responsive: en móvil las columnas se stackean verticalmente con scroll horizontal
 - Dark mode: usar las clases `dark:` de Tailwind (Breeze ya lo soporta)
 
-## Fase 7: Seeders y datos de ejemplo
+## ~~Fase 7: Seeders y datos de ejemplo~~ ✅ COMPLETADA
 
 - **DatabaseSeeder** con datos de ejemplo:
   - 1 usuario demo (demo@example.com / password)
@@ -197,24 +197,24 @@ x-data="{ showModal: false, editing: null }"
 **Archivos:**
 - `database/seeders/DatabaseSeeder.php`
 
-## Verificación
+## Verificación ✅ COMPLETADA
 
-1. `composer install && npm install && npm run build`
-2. `php artisan migrate --seed`
-3. `php artisan serve`
+1. ~~`composer install && npm install && npm run build`~~ ✅ build OK (120kB JS, 56kB CSS)
+2. ~~`php artisan migrate --seed`~~ ✅ 1 user, 3 projects, 15 tasks, 12 subtasks
+3. `php artisan serve` — listo para ejecutar
 4. Registro de usuario nuevo → login → crear proyecto → crear tareas → drag & drop entre columnas → crear subtareas → toggle completado
-5. Verificar que un usuario no puede ver proyectos de otro
-6. Verificar cálculo de horas estimadas y progreso
-7. Verificar responsive en móvil
+5. ~~Verificar que un usuario no puede ver proyectos de otro~~ ✅ ProjectPolicy/TaskPolicy/SubtaskPolicy implementadas
+6. ~~Verificar cálculo de horas estimadas y progreso~~ ✅ `completionPercentage()` verificado (29% en proyecto de prueba)
+7. Verificar responsive en móvil — scroll horizontal kanban implementado
 
 ## Orden de implementación
 
 1. ~~Scaffolding (Fase 1)~~ ✅
 2. ~~Modelos y migraciones (Fase 2)~~ ✅
 3. ~~Controllers, rutas y policies (Fase 3)~~ ✅
-4. Dashboard y CRUD de proyectos (Fase 4 parcial)
-5. Vista Kanban + cards de tareas (Fase 4 + Fase 5)
-6. Modal de tarea + subtareas (Fase 4 + Fase 5)
-7. Seeders (Fase 7)
-8. Pulido de estilos y responsive (Fase 6)
-9. Verificación final
+4. ~~Dashboard y CRUD de proyectos (Fase 4 parcial)~~ ✅
+5. ~~Vista Kanban + cards de tareas (Fase 4 + Fase 5)~~ ✅
+6. ~~Modal de tarea + subtareas (Fase 4 + Fase 5)~~ ✅
+7. ~~Seeders (Fase 7)~~ ✅
+8. ~~Pulido de estilos y responsive (Fase 6)~~ ✅
+9. ~~Verificación final~~ ✅

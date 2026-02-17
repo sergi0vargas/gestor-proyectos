@@ -1,3 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+    /* Kanban horizontal scroll suave */
+    .kanban-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.gray.300') transparent;
+    }
+    .kanban-scroll::-webkit-scrollbar {
+        height: 6px;
+    }
+    .kanban-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .kanban-scroll::-webkit-scrollbar-thumb {
+        background-color: theme('colors.gray.300');
+        border-radius: 3px;
+    }
+    .dark .kanban-scroll::-webkit-scrollbar-thumb {
+        background-color: theme('colors.gray.600');
+    }
+
+    /* Card dragging */
+    .sortable-ghost {
+        @apply opacity-30 ring-2 ring-indigo-400 ring-offset-1;
+    }
+
+    /* Line clamp */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+}

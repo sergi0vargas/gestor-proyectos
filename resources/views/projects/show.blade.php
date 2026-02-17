@@ -38,7 +38,7 @@
                 @endif
 
                 {{-- Kanban board --}}
-                <div class="flex gap-4 overflow-x-auto pb-4" style="min-height: 70vh">
+                <div class="flex gap-4 overflow-x-auto pb-4 kanban-scroll" style="min-height: 70vh">
 
                     @foreach(['backlog' => 'Backlog', 'in_progress' => 'En Progreso', 'testing' => 'Testing', 'done' => 'Terminada'] as $colStatus => $label)
                     <div class="kanban-column flex-shrink-0 w-72 flex flex-col">
