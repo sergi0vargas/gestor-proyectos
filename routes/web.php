@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AIController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
@@ -13,6 +14,9 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // AI
+    Route::post('/ai/decompose-task', [AIController::class, 'decomposeTask'])->name('ai.decompose');
 
     // Projects
     Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');

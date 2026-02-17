@@ -20,17 +20,26 @@ class TaskController extends Controller
         $this->authorize('update', $project);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'priority' => 'required|in:high,medium,low',
-            'estimated_hours' => 'nullable|numeric|min:0',
-            'status' => 'required|in:backlog,in_progress,testing,done',
+            'title'                      => 'required|string|max:255',
+            'description'                => 'nullable|string',
+            'priority'                   => 'required|in:high,medium,low',
+            'estimated_hours'            => 'nullable|numeric|min:0',
+            'status'                     => 'required|in:backlog,in_progress,testing,done',
+            'subtasks'                   => 'nullable|array',
+            'subtasks.*.title'           => 'required|string|max:255',
+            'subtasks.*.estimated_hours' => 'nullable|numeric|min:0',
         ]);
 
         $maxPosition = $project->tasks()->where('status', $validated['status'])->max('position') ?? -1;
         $validated['position'] = $maxPosition + 1;
 
-        $project->tasks()->create($validated);
+        $task = $project->tasks()->create(
+            collect($validated)->except('subtasks')->toArray()
+        );
+
+        foreach ($validated['subtasks'] ?? [] as $subtaskData) {
+            $task->subtasks()->create($subtaskData);
+        }
 
         return redirect()->route('projects.show', $project)->with('success', 'Tarea creada.');
     }

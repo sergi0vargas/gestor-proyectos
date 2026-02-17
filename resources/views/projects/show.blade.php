@@ -120,6 +120,12 @@
         return {
             activeTask: null,
             newTaskStatus: 'backlog',
+            newTaskTitle: '',
+            newTaskDescription: '',
+            newTaskPriority: 'medium',
+            aiLoading: false,
+            aiError: null,
+            aiSubtasks: [],
             csrfToken: document.querySelector('meta[name="csrf-token"]').content,
 
             init() {
@@ -189,6 +195,12 @@
 
             openNewTaskModal(status) {
                 this.newTaskStatus = status;
+                this.newTaskTitle = '';
+                this.newTaskDescription = '';
+                this.newTaskPriority = 'medium';
+                this.aiLoading = false;
+                this.aiError = null;
+                this.aiSubtasks = [];
                 this.$dispatch('open-modal', 'new-task');
             },
 
@@ -234,6 +246,44 @@
                     this.activeTask.subtasks.push(data.subtask);
                     form.reset();
                 }
+            },
+
+            async suggestSubtasks() {
+                if (!this.newTaskTitle.trim()) return;
+                this.aiLoading = true;
+                this.aiError = null;
+                try {
+                    const res = await fetch('/ai/decompose-task', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': this.csrfToken,
+                        },
+                        body: JSON.stringify({
+                            title: this.newTaskTitle,
+                            description: this.newTaskDescription,
+                        }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Error del servidor');
+                    this.newTaskPriority = data.priority;
+                    this.aiSubtasks = data.subtasks.map(s => ({
+                        title: s.title,
+                        estimated_hours: s.estimated_hours ?? '',
+                    }));
+                } catch (e) {
+                    this.aiError = e.message;
+                } finally {
+                    this.aiLoading = false;
+                }
+            },
+
+            addAiSubtask() {
+                this.aiSubtasks.push({ title: '', estimated_hours: '' });
+            },
+
+            removeAiSubtask(index) {
+                this.aiSubtasks.splice(index, 1);
             },
         }
     }

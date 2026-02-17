@@ -182,23 +182,47 @@
         <div>
             <x-input-label for="task_title" value="Título *" />
             <x-text-input id="task_title" name="title" type="text" class="mt-1 block w-full" required autofocus
-                          placeholder="Título de la tarea" />
+                          placeholder="Título de la tarea" x-model="newTaskTitle" />
         </div>
 
         <div>
             <x-input-label for="task_desc" value="Descripción" />
             <textarea id="task_desc" name="description" rows="2"
                       class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm"
-                      placeholder="Descripción opcional"></textarea>
+                      placeholder="Descripción opcional"
+                      x-model="newTaskDescription"></textarea>
+        </div>
+
+        {{-- Botón IA --}}
+        <div>
+            <button type="button"
+                    @click="suggestSubtasks()"
+                    :disabled="!newTaskTitle.trim() || aiLoading"
+                    class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 disabled:opacity-40 disabled:cursor-not-allowed">
+                <template x-if="!aiLoading">
+                    <span>✨ Sugerir subtareas con IA</span>
+                </template>
+                <template x-if="aiLoading">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                        </svg>
+                        Analizando...
+                    </span>
+                </template>
+            </button>
+            <p x-show="aiError" x-text="aiError" class="mt-1 text-sm text-red-600 dark:text-red-400"></p>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
             <div>
                 <x-input-label for="task_priority" value="Prioridad" />
                 <select id="task_priority" name="priority"
+                        x-model="newTaskPriority"
                         class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm">
                     <option value="high">Alta</option>
-                    <option value="medium" selected>Media</option>
+                    <option value="medium">Media</option>
                     <option value="low">Baja</option>
                 </select>
             </div>
@@ -207,6 +231,31 @@
                 <x-text-input id="task_hours" name="estimated_hours" type="number" step="0.5" min="0"
                               class="mt-1 block w-full" placeholder="0" />
             </div>
+        </div>
+
+        {{-- Subtareas sugeridas por IA --}}
+        <div x-show="aiSubtasks.length > 0" class="space-y-2">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Subtareas sugeridas</p>
+            <template x-for="(subtask, index) in aiSubtasks" :key="index">
+                <div class="flex items-center gap-2">
+                    <input type="text"
+                           :name="`subtasks[${index}][title]`"
+                           x-model="subtask.title"
+                           placeholder="Título de la subtarea"
+                           class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    <input type="number"
+                           :name="`subtasks[${index}][estimated_hours]`"
+                           x-model="subtask.estimated_hours"
+                           step="0.5" min="0" placeholder="h"
+                           class="w-16 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                    <button type="button" @click="removeAiSubtask(index)"
+                            class="text-gray-400 hover:text-red-500 text-lg leading-none">&times;</button>
+                </div>
+            </template>
+            <button type="button" @click="addAiSubtask()"
+                    class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+                + Añadir subtarea
+            </button>
         </div>
 
         <div class="flex justify-end gap-3 pt-2">
