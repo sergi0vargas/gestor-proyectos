@@ -6,22 +6,22 @@ App Laravel para que desarrolladores gestionen proyectos, tareas y subtareas con
 
 **Stack:** Laravel 12 + Breeze (auth) + Blade + Alpine.js + Tailwind CSS + SQLite
 
-## Fase 1: Scaffolding del proyecto
+## ~~Fase 1: Scaffolding del proyecto~~ ✅ COMPLETADA
 
-1. Crear proyecto Laravel: `composer create-project laravel/laravel gestor_proyectos`
-2. Instalar Laravel Breeze (Blade): `composer require laravel/breeze --dev` → `php artisan breeze:install blade`
-3. Configurar SQLite en `.env`: `DB_CONNECTION=sqlite`
-4. Crear archivo `database/database.sqlite`
-5. Instalar SortableJS para drag & drop: `npm install sortablejs`
-6. `npm install && npm run build`
-7. `php artisan migrate`
-8. Inicializar git
+1. ~~Crear proyecto Laravel: `composer create-project laravel/laravel gestor_proyectos`~~
+2. ~~Instalar Laravel Breeze (Blade): `composer require laravel/breeze --dev` → `php artisan breeze:install blade`~~
+3. ~~Configurar SQLite en `.env`: `DB_CONNECTION=sqlite`~~
+4. ~~Crear archivo `database/database.sqlite`~~
+5. ~~Instalar SortableJS para drag & drop: `npm install sortablejs`~~
+6. ~~`npm install && npm run build`~~
+7. ~~`php artisan migrate`~~
+8. ~~Inicializar git~~
 
 **Archivos clave:**
 - `.env` — configuración de BD
 - `vite.config.js` — configuración de assets
 
-## Fase 2: Modelos, migraciones y relaciones
+## ~~Fase 2: Modelos, migraciones y relaciones~~ ✅ COMPLETADA
 
 ### Migración `projects`
 ```
@@ -72,7 +72,7 @@ App Laravel para que desarrolladores gestionen proyectos, tareas y subtareas con
 - `database/migrations/xxxx_create_tasks_table.php`
 - `database/migrations/xxxx_create_subtasks_table.php`
 
-## Fase 3: Controllers y rutas
+## ~~Fase 3: Controllers y rutas~~ ✅ COMPLETADA
 
 ### Routes (`routes/web.php`)
 Todas protegidas con middleware `auth`:
@@ -209,9 +209,9 @@ x-data="{ showModal: false, editing: null }"
 
 ## Orden de implementación
 
-1. Scaffolding (Fase 1)
-2. Modelos y migraciones (Fase 2)
-3. Controllers, rutas y policies (Fase 3)
+1. ~~Scaffolding (Fase 1)~~ ✅
+2. ~~Modelos y migraciones (Fase 2)~~ ✅
+3. ~~Controllers, rutas y policies (Fase 3)~~ ✅
 4. Dashboard y CRUD de proyectos (Fase 4 parcial)
 5. Vista Kanban + cards de tareas (Fase 4 + Fase 5)
 6. Modal de tarea + subtareas (Fase 4 + Fase 5)

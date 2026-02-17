@@ -8,6 +8,13 @@ use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    public function show(Task $task)
+    {
+        $this->authorize('update', $task);
+        $task->load('subtasks');
+        return response()->json($task);
+    }
+
     public function store(Request $request, Project $project)
     {
         $this->authorize('update', $project);
