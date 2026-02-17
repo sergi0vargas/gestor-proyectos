@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SubtaskController;
+use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/subtasks/{subtask}', [SubtaskController::class, 'update'])->name('subtasks.update');
     Route::delete('/subtasks/{subtask}', [SubtaskController::class, 'destroy'])->name('subtasks.destroy');
     Route::patch('/subtasks/{subtask}/toggle', [SubtaskController::class, 'toggle'])->name('subtasks.toggle');
+    Route::post('/subtasks/{subtask}/subtasks', [SubtaskController::class, 'storeChild'])->name('subtasks.storeChild');
+
+    // Tags
+    Route::get('/projects/{project}/tags', [TagController::class, 'index'])->name('tags.index');
+    Route::post('/projects/{project}/tags', [TagController::class, 'store'])->name('tags.store');
+    Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
+    Route::post('/tasks/{task}/tags/{tag}', [TagController::class, 'attach'])->name('tags.attach');
+    Route::delete('/tasks/{task}/tags/{tag}', [TagController::class, 'detach'])->name('tags.detach');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

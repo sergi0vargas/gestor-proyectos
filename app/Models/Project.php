@@ -24,6 +24,11 @@ class Project extends Model
         return $this->hasMany(Task::class);
     }
 
+    public function tags(): HasMany
+    {
+        return $this->hasMany(Tag::class);
+    }
+
     public function completionPercentage(): int
     {
         $total = $this->tasks()->count();

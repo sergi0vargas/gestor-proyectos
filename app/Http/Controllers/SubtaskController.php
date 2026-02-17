@@ -52,4 +52,28 @@ class SubtaskController extends Controller
 
         return response()->json(['success' => true, 'is_completed' => $subtask->is_completed]);
     }
+
+    public function storeChild(Request $request, Subtask $subtask)
+    {
+        $this->authorize('update', $subtask);
+
+        if ($subtask->parent_id !== null) {
+            return response()->json(['error' => 'No se permiten más de 2 niveles de subtareas.'], 422);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'estimated_hours' => 'nullable|numeric|min:0',
+        ]);
+
+        $child = Subtask::create([
+            'task_id' => $subtask->task_id,
+            'parent_id' => $subtask->id,
+            'title' => $validated['title'],
+            'estimated_hours' => $validated['estimated_hours'] ?? null,
+            'is_completed' => false,
+        ]);
+
+        return response()->json(['success' => true, 'subtask' => $child]);
+    }
 }

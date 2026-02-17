@@ -11,7 +11,10 @@ class TaskController extends Controller
     public function show(Task $task)
     {
         $this->authorize('update', $task);
-        $task->load('subtasks');
+        $task->load([
+            'subtasks' => fn ($q) => $q->whereNull('parent_id')->with('children'),
+            'tags',
+        ]);
         return response()->json($task);
     }
 

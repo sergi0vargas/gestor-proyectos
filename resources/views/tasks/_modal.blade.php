@@ -108,6 +108,77 @@
                     </template>
                 </details>
 
+                {{-- Tags --}}
+                <div class="border-t dark:border-gray-700 pt-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200">Tags</h4>
+                        <button @click="showTagPanel = !showTagPanel"
+                                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+                            + Añadir tag
+                        </button>
+                    </div>
+
+                    {{-- Current tags on task --}}
+                    <div class="flex flex-wrap gap-1.5 mb-2">
+                        <template x-if="activeTask && activeTask.tags">
+                            <template x-for="tag in activeTask.tags" :key="tag.id">
+                                <span class="inline-flex items-center gap-1 text-xs text-white rounded-full px-2 py-0.5"
+                                      :style="`background-color: ${tag.color}`">
+                                    <span x-text="tag.name"></span>
+                                    <button @click="toggleTag(tag)" class="hover:opacity-75 leading-none">&times;</button>
+                                </span>
+                            </template>
+                        </template>
+                    </div>
+
+                    {{-- Tag panel --}}
+                    <div x-show="showTagPanel" x-cloak class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 space-y-3 border border-gray-200 dark:border-gray-700">
+
+                        {{-- Project tags list --}}
+                        <div class="space-y-1 max-h-40 overflow-y-auto">
+                            <template x-for="tag in projectTags" :key="tag.id">
+                                <div class="flex items-center justify-between gap-2 group">
+                                    <label class="flex items-center gap-2 cursor-pointer flex-1">
+                                        <input type="checkbox"
+                                               :checked="activeTask && activeTask.tags && activeTask.tags.some(t => t.id === tag.id)"
+                                               @change="toggleTag(tag)"
+                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+                                        <span class="w-3 h-3 rounded-full inline-block" :style="`background-color: ${tag.color}`"></span>
+                                        <span class="text-sm text-gray-700 dark:text-gray-300" x-text="tag.name"></span>
+                                    </label>
+                                    <button @click="deleteTag(tag)"
+                                            class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 text-xs transition">✕</button>
+                                </div>
+                            </template>
+                            <p x-show="projectTags.length === 0" class="text-xs text-gray-400 dark:text-gray-500">No hay tags en este proyecto.</p>
+                        </div>
+
+                        {{-- Create new tag --}}
+                        <div class="border-t dark:border-gray-700 pt-2 space-y-2">
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Nuevo tag</p>
+                            <div class="flex gap-2">
+                                <input type="text" x-model="newTagName" placeholder="Nombre del tag"
+                                       class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-sm" />
+                            </div>
+                            <div class="flex gap-1.5 flex-wrap">
+                                <template x-for="color in tagColors" :key="color">
+                                    <button type="button"
+                                            @click="newTagColor = color"
+                                            class="w-5 h-5 rounded-full border-2 transition"
+                                            :style="`background-color: ${color}`"
+                                            :class="newTagColor === color ? 'border-gray-900 dark:border-white scale-110' : 'border-transparent'">
+                                    </button>
+                                </template>
+                            </div>
+                            <button @click="createTag(newTagName, newTagColor)"
+                                    :disabled="!newTagName.trim()"
+                                    class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white text-xs font-medium rounded-lg transition">
+                                Crear tag
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Subtasks --}}
                 <div class="border-t dark:border-gray-700 pt-4">
                     <h4 class="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3">Subtareas</h4>
@@ -115,23 +186,67 @@
                     <ul class="space-y-2 mb-3" id="subtask-list">
                         <template x-if="activeTask && activeTask.subtasks">
                             <template x-for="subtask in activeTask.subtasks" :key="subtask.id">
-                                <li class="flex items-center gap-2 group" :id="`subtask-${subtask.id}`">
-                                    <input type="checkbox"
-                                           :checked="subtask.is_completed"
-                                           @change="toggleSubtask(subtask.id, $event.target); subtask.is_completed = !subtask.is_completed"
-                                           class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
-                                    <span class="flex-1 text-sm text-gray-700 dark:text-gray-300"
-                                          :class="subtask.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''"
-                                          x-text="subtask.title"></span>
-                                    <template x-if="subtask.estimated_hours">
-                                        <span class="text-xs text-gray-400 dark:text-gray-500" x-text="`${subtask.estimated_hours}h`"></span>
-                                    </template>
-                                    <button @click="deleteSubtask(subtask.id, $el.closest('li'))"
-                                            class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition p-0.5">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                        </svg>
-                                    </button>
+                                <li :id="`subtask-${subtask.id}`">
+                                    {{-- Level 1 subtask --}}
+                                    <div class="flex items-center gap-2 group">
+                                        <input type="checkbox"
+                                               :checked="subtask.is_completed"
+                                               @change="toggleSubtask(subtask.id, $event.target); subtask.is_completed = !subtask.is_completed"
+                                               class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                        <span class="flex-1 text-sm text-gray-700 dark:text-gray-300"
+                                              :class="subtask.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''"
+                                              x-text="subtask.title"></span>
+                                        <template x-if="subtask.estimated_hours">
+                                            <span class="text-xs text-gray-400 dark:text-gray-500" x-text="`${subtask.estimated_hours}h`"></span>
+                                        </template>
+                                        {{-- Expand children toggle --}}
+                                        <button @click="subtask.expanded = !subtask.expanded"
+                                                class="text-xs text-gray-400 hover:text-indigo-500 transition px-1"
+                                                x-text="subtask.expanded ? '▾' : '▸'">
+                                        </button>
+                                        <button @click="deleteSubtask(subtask.id, $el.closest('li'))"
+                                                class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition p-0.5">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    {{-- Children (level 2) --}}
+                                    <div x-show="subtask.expanded" x-cloak class="pl-6 mt-1 space-y-1">
+                                        <template x-for="child in (subtask.children || [])" :key="child.id">
+                                            <div class="flex items-center gap-2 group" :id="`subtask-${child.id}`">
+                                                <input type="checkbox"
+                                                       :checked="child.is_completed"
+                                                       @change="toggleSubtask(child.id, $event.target); child.is_completed = !child.is_completed"
+                                                       class="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                                                <span class="flex-1 text-xs text-gray-600 dark:text-gray-400"
+                                                      :class="child.is_completed ? 'line-through text-gray-400 dark:text-gray-500' : ''"
+                                                      x-text="child.title"></span>
+                                                <template x-if="child.estimated_hours">
+                                                    <span class="text-xs text-gray-400 dark:text-gray-500" x-text="`${child.estimated_hours}h`"></span>
+                                                </template>
+                                                <button @click="deleteSubtask(child.id, $el.closest('div[id]'))"
+                                                        class="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition p-0.5">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </template>
+
+                                        {{-- Add child subtask form --}}
+                                        <form @submit.prevent="addChildSubtask(subtask, $el)" class="flex gap-1.5 mt-1">
+                                            <input type="text" name="title" required placeholder="Sub-subtarea..."
+                                                   class="flex-1 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs" />
+                                            <input type="number" name="estimated_hours" step="0.5" min="0" placeholder="h"
+                                                   class="w-14 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-xs" />
+                                            <button type="submit"
+                                                    class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg transition">
+                                                +
+                                            </button>
+                                        </form>
+                                    </div>
                                 </li>
                             </template>
                         </template>

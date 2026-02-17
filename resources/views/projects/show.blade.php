@@ -26,7 +26,7 @@
     </x-slot>
 
     {{-- Entire page content within kanbanBoard scope so modals have access --}}
-    <div x-data="kanbanBoard()" x-init="init()">
+    <div x-data="kanbanBoard(@json($projectTags))" x-init="init()">
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -116,7 +116,7 @@
 
     @push('scripts')
     <script>
-    function kanbanBoard() {
+    function kanbanBoard(projectTags = []) {
         return {
             activeTask: null,
             newTaskStatus: 'backlog',
@@ -126,6 +126,11 @@
             aiLoading: false,
             aiError: null,
             aiSubtasks: [],
+            projectTags: projectTags,
+            showTagPanel: false,
+            newTagName: '',
+            newTagColor: '#6366f1',
+            tagColors: ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#8b5cf6','#14b8a6'],
             csrfToken: document.querySelector('meta[name="csrf-token"]').content,
 
             init() {
@@ -188,7 +193,13 @@
                 })
                 .then(r => r.json())
                 .then(data => {
+                    // Initialize expanded state for subtasks
+                    if (data.subtasks) {
+                        data.subtasks.forEach(s => { s.expanded = false; });
+                    }
                     this.activeTask = data;
+                    this.showTagPanel = false;
+                    this.newTagName = '';
                     this.$dispatch('open-modal', 'task-detail');
                 });
             },
@@ -284,6 +295,83 @@
 
             removeAiSubtask(index) {
                 this.aiSubtasks.splice(index, 1);
+            },
+
+            async addChildSubtask(parentSubtask, form) {
+                const fd = new FormData(form);
+                const res = await fetch(`/subtasks/${parentSubtask.id}/subtasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: fd.get('title'),
+                        estimated_hours: fd.get('estimated_hours') || null,
+                    }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    if (!parentSubtask.children) parentSubtask.children = [];
+                    parentSubtask.children.push(data.subtask);
+                    form.reset();
+                }
+            },
+
+            async toggleTag(tag) {
+                if (!this.activeTask) return;
+                const taskId = this.activeTask.id;
+                const tagId = tag.id;
+                const hasTag = this.activeTask.tags && this.activeTask.tags.some(t => t.id === tagId);
+
+                if (hasTag) {
+                    await fetch(`/tasks/${taskId}/tags/${tagId}`, {
+                        method: 'DELETE',
+                        headers: { 'X-CSRF-TOKEN': this.csrfToken, 'Accept': 'application/json' },
+                    });
+                    this.activeTask.tags = this.activeTask.tags.filter(t => t.id !== tagId);
+                } else {
+                    await fetch(`/tasks/${taskId}/tags/${tagId}`, {
+                        method: 'POST',
+                        headers: { 'X-CSRF-TOKEN': this.csrfToken, 'Accept': 'application/json' },
+                    });
+                    if (!this.activeTask.tags) this.activeTask.tags = [];
+                    this.activeTask.tags.push(tag);
+                }
+            },
+
+            async createTag(name, color) {
+                if (!name.trim()) return;
+                const projectId = {{ $project->id }};
+                const res = await fetch(`/projects/${projectId}/tags`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({ name: name.trim(), color }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    this.projectTags.push(data.tag);
+                    // Auto-assign to current task
+                    await this.toggleTag(data.tag);
+                    this.newTagName = '';
+                }
+            },
+
+            async deleteTag(tag) {
+                if (!confirm(`¿Eliminar el tag "${tag.name}"?`)) return;
+                await fetch(`/tags/${tag.id}`, {
+                    method: 'DELETE',
+                    headers: { 'X-CSRF-TOKEN': this.csrfToken, 'Accept': 'application/json' },
+                });
+                this.projectTags = this.projectTags.filter(t => t.id !== tag.id);
+                if (this.activeTask && this.activeTask.tags) {
+                    this.activeTask.tags = this.activeTask.tags.filter(t => t.id !== tag.id);
+                }
             },
         }
     }

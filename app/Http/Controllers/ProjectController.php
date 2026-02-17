@@ -38,7 +38,7 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['tasks.subtasks']);
+        $project->load(['tasks.subtasks', 'tasks.tags', 'tags']);
 
         $columns = [
             'backlog'     => $project->tasks->where('status', 'backlog')->sortBy('position')->values(),
@@ -47,7 +47,9 @@ class ProjectController extends Controller
             'done'        => $project->tasks->where('status', 'done')->sortBy('position')->values(),
         ];
 
-        return view('projects.show', compact('project', 'columns'));
+        $projectTags = $project->tags;
+
+        return view('projects.show', compact('project', 'columns', 'projectTags'));
     }
 
     public function update(Request $request, Project $project)
