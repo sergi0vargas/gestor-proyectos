@@ -37,11 +37,14 @@
         </div>
     </div>
 
-    <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
+    <div class="px-5 py-3 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center gap-2">
         <span class="text-xs text-gray-500 dark:text-gray-400">{{ $project->tasks_count ?? $project->tasks->count() }} tareas</span>
-        <a href="{{ route('projects.show', $project) }}"
-           class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
-            Abrir →
-        </a>
+        <div class="flex items-center gap-2">
+            <x-export-dropdown :project="$project" />
+            <a href="{{ route('projects.show', $project) }}"
+               class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium">
+                Abrir →
+            </a>
+        </div>
     </div>
 </div>

@@ -75,4 +75,102 @@ class ProjectController extends Controller
 
         return redirect()->route('projects.index')->with('success', 'Proyecto eliminado.');
     }
+
+    public function export(Request $request, Project $project): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $this->authorize('view', $project);
+
+        $format = $request->query('format', 'json');
+        $project->load('tasks.subtasks', 'tasks.tags');
+
+        $slug = \Str::slug($project->name);
+        $date = now()->format('Y-m-d');
+        $filename = "{$project->id}_{$slug}_{$date}";
+
+        if ($format === 'csv') {
+            return $this->exportCsv($project, $filename);
+        }
+
+        return $this->exportJson($project, $filename);
+    }
+
+    private function exportJson(Project $project, string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $data = [
+            'exported_at' => now()->toIso8601String(),
+            'project' => [
+                'id' => $project->id,
+                'name' => $project->name,
+                'description' => $project->description,
+                'status' => $project->status,
+                'deadline' => $project->deadline?->toDateString(),
+                'completion_percentage' => $project->completionPercentage(),
+                'tasks' => $project->tasks->map(fn ($task) => [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => $task->status,
+                    'priority' => $task->priority,
+                    'estimated_hours' => $task->estimated_hours,
+                    'position' => $task->position,
+                    'tags' => $task->tags->pluck('name')->toArray(),
+                    'subtasks' => $task->subtasks->map(fn ($st) => [
+                        'id' => $st->id,
+                        'title' => $st->title,
+                        'is_completed' => $st->is_completed,
+                        'estimated_hours' => $st->estimated_hours,
+                    ])->values()->toArray(),
+                ])->values()->toArray(),
+            ],
+        ];
+
+        return response()->streamDownload(
+            fn () => print(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)),
+            "{$filename}.json",
+            ['Content-Type' => 'application/json']
+        );
+    }
+
+    private function exportCsv(Project $project, string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $headers = [
+            'project_id', 'project_name', 'project_description', 'project_status',
+            'project_deadline', 'project_completion_pct',
+            'task_id', 'task_title', 'task_description', 'task_status',
+            'task_priority', 'task_estimated_hours', 'task_position', 'task_tags',
+            'subtask_id', 'subtask_title', 'subtask_is_completed', 'subtask_estimated_hours',
+        ];
+
+        return response()->streamDownload(function () use ($project, $headers) {
+            $handle = fopen('php://output', 'w');
+            fputcsv($handle, $headers);
+
+            $pct = $project->completionPercentage();
+
+            foreach ($project->tasks as $task) {
+                $projectRow = [
+                    $project->id, $project->name, $project->description,
+                    $project->status, $project->deadline?->toDateString(), $pct,
+                ];
+                $taskRow = [
+                    $task->id, $task->title, $task->description, $task->status,
+                    $task->priority, $task->estimated_hours, $task->position,
+                    $task->tags->pluck('name')->implode(','),
+                ];
+
+                if ($task->subtasks->isEmpty()) {
+                    fputcsv($handle, array_merge($projectRow, $taskRow, ['', '', '', '']));
+                } else {
+                    foreach ($task->subtasks as $subtask) {
+                        fputcsv($handle, array_merge($projectRow, $taskRow, [
+                            $subtask->id, $subtask->title,
+                            $subtask->is_completed ? '1' : '0',
+                            $subtask->estimated_hours,
+                        ]));
+                    }
+                }
+            }
+            fclose($handle);
+        }, "{$filename}.csv", ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
 }

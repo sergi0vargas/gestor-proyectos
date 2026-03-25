@@ -9,6 +9,7 @@
                 @endif
             </div>
             <div class="flex items-center gap-2 shrink-0">
+                <x-export-dropdown :project="$project" />
                 <button @click="$dispatch('open-modal', 'edit-project')"
                         class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                     Editar

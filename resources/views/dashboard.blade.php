@@ -187,7 +187,10 @@
                                         <div class="bg-indigo-500 h-1.5 rounded-full transition-all" style="width: {{ $pct }}%"></div>
                                     </div>
                                 </div>
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300 shrink-0">{{ $pct }}%</span>
+                                <div class="flex items-center gap-3 shrink-0">
+                                    <span class="text-sm font-medium text-gray-600 dark:text-gray-300">{{ $pct }}%</span>
+                                    <x-export-dropdown :project="$project" :compact="true" />
+                                </div>
                             </li>
                         @endforeach
                     </ul>
