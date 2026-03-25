@@ -268,8 +268,16 @@
                     </form>
                 </div>
 
-                {{-- Delete task --}}
-                <div class="border-t dark:border-gray-700 pt-3 flex justify-end">
+                {{-- Delete task + Historial --}}
+                <div class="border-t dark:border-gray-700 pt-3 flex items-center justify-between">
+                    <template x-if="activeTask">
+                        <button @click="openTaskLog()"
+                                :disabled="loadingTaskLog"
+                                class="text-sm text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 disabled:opacity-40">
+                            <span x-show="!loadingTaskLog">Historial</span>
+                            <span x-show="loadingTaskLog">Cargando...</span>
+                        </button>
+                    </template>
                     <template x-if="activeTask">
                         <form :action="`/tasks/${activeTask.id}`" method="POST"
                               onsubmit="return confirm('¿Eliminar esta tarea?')">
@@ -378,4 +386,82 @@
             <x-primary-button>Crear tarea</x-primary-button>
         </div>
     </form>
+</x-modal>
+
+{{-- Modal: task activity log --}}
+<x-modal name="task-activity" maxWidth="2xl">
+    <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Historial de la tarea</h3>
+            <button @click="$dispatch('close')"
+                    class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div x-show="loadingTaskLog" class="flex justify-center py-8">
+            <svg class="animate-spin h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+        </div>
+
+        <p x-show="!loadingTaskLog && taskLog.length === 0"
+           class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+            No hay actividad registrada.
+        </p>
+
+        <ul x-show="!loadingTaskLog && taskLog.length > 0"
+            class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            <template x-for="entry in taskLog" :key="entry.id">
+                <li class="text-sm border-b dark:border-gray-700 pb-3 last:border-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="font-medium text-gray-800 dark:text-gray-200" x-text="entry.user"></span>
+                        <span class="text-xs px-1.5 py-0.5 rounded font-medium"
+                              :class="{
+                                'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300': entry.event === 'created',
+                                'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300': entry.event === 'updated',
+                                'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300': entry.event === 'deleted',
+                              }"
+                              x-text="{ created: 'Creado', updated: 'Actualizado', deleted: 'Eliminado' }[entry.event]">
+                        </span>
+                        <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto" x-text="entry.created_at"></span>
+                    </div>
+
+                    <template x-if="entry.event === 'updated' && entry.new_values">
+                        <ul class="space-y-0.5 mt-1 pl-2">
+                            <template x-for="(newVal, field) in entry.new_values" :key="field">
+                                <li class="text-xs text-gray-600 dark:text-gray-400">
+                                    <span class="font-medium"
+                                          x-text="{ title: 'Título', description: 'Descripción', priority: 'Prioridad', status: 'Estado', estimated_hours: 'Horas estimadas' }[field] || field">
+                                    </span>:
+                                    <span class="line-through text-red-500 dark:text-red-400"
+                                          x-text="translateValue(field, entry.old_values[field])"></span>
+                                    →
+                                    <span class="text-green-600 dark:text-green-400"
+                                          x-text="translateValue(field, newVal)"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+
+                    <template x-if="entry.event === 'created' && entry.new_values">
+                        <ul class="space-y-0.5 mt-1 pl-2">
+                            <template x-for="(val, field) in entry.new_values" :key="field">
+                                <li class="text-xs text-gray-600 dark:text-gray-400"
+                                    x-show="val !== null && val !== ''">
+                                    <span class="font-medium"
+                                          x-text="{ title: 'Título', description: 'Descripción', priority: 'Prioridad', status: 'Estado', estimated_hours: 'Horas estimadas' }[field] || field">
+                                    </span>:
+                                    <span x-text="translateValue(field, val)"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                </li>
+            </template>
+        </ul>
+    </div>
 </x-modal>

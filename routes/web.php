@@ -5,6 +5,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SubtaskController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TaskController;
 use Illuminate\Support\Facades\Route;
@@ -48,6 +49,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/tags/{tag}', [TagController::class, 'destroy'])->name('tags.destroy');
     Route::post('/tasks/{task}/tags/{tag}', [TagController::class, 'attach'])->name('tags.attach');
     Route::delete('/tasks/{task}/tags/{tag}', [TagController::class, 'detach'])->name('tags.detach');
+
+    // Activity Logs
+    Route::get('/projects/{project}/activity', [ActivityLogController::class, 'forProject'])->name('activity.project');
+    Route::get('/tasks/{task}/activity', [ActivityLogController::class, 'forTask'])->name('activity.task');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

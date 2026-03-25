@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(dir:*)",
-      "Bash(php artisan route:list:*)"
+      "Bash(php artisan route:list:*)",
+      "Bash(php artisan:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(sqlite3 database/database.sqlite \".schema activity_logs\")"
     ]
   }
 }

@@ -2,12 +2,19 @@
 
 namespace App\Models;
 
+use App\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
+    use HasFactory;
+    use LogsActivity;
+
+    protected array $loggableAttributes = ['name', 'description', 'deadline', 'status'];
+
     protected $fillable = ['user_id', 'name', 'description', 'deadline', 'status'];
 
     protected $casts = [

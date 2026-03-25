@@ -8,7 +8,7 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400">📅 {{ $project->deadline->format('d/m/Y') }}</p>
                 @endif
             </div>
-            <div class="flex items-center gap-2 shrink-0">
+            <div x-data="{}" class="flex items-center gap-2 shrink-0">
                 <x-export-dropdown :project="$project" />
                 <button @click="$dispatch('open-modal', 'edit-project')"
                         class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition">
@@ -37,6 +37,16 @@
                         {{ session('success') }}
                     </div>
                 @endif
+
+                {{-- Project activity log button --}}
+                <div class="flex justify-end mb-3">
+                    <button @click="openProjectLog()"
+                            :disabled="loadingProjectLog"
+                            class="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-40 transition">
+                        <span x-show="!loadingProjectLog">Historial del proyecto</span>
+                        <span x-show="loadingProjectLog">Cargando...</span>
+                    </button>
+                </div>
 
                 {{-- Kanban board --}}
                 <div class="flex gap-4 overflow-x-auto pb-4 kanban-scroll" style="min-height: 70vh">
@@ -113,6 +123,84 @@
             </form>
         </x-modal>
 
+        {{-- Project Activity Log Modal --}}
+        <x-modal name="project-activity" maxWidth="2xl">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Historial del proyecto</h3>
+                    <button @click="$dispatch('close')"
+                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div x-show="loadingProjectLog" class="flex justify-center py-8">
+                    <svg class="animate-spin h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                    </svg>
+                </div>
+
+                <p x-show="!loadingProjectLog && projectLog.length === 0"
+                   class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    No hay actividad registrada.
+                </p>
+
+                <ul x-show="!loadingProjectLog && projectLog.length > 0"
+                    class="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+                    <template x-for="entry in projectLog" :key="entry.id">
+                        <li class="text-sm border-b dark:border-gray-700 pb-3 last:border-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-medium text-gray-800 dark:text-gray-200" x-text="entry.user"></span>
+                                <span class="text-xs px-1.5 py-0.5 rounded font-medium"
+                                      :class="{
+                                        'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300': entry.event === 'created',
+                                        'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300': entry.event === 'updated',
+                                        'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300': entry.event === 'deleted',
+                                      }"
+                                      x-text="{ created: 'Creado', updated: 'Actualizado', deleted: 'Eliminado' }[entry.event]">
+                                </span>
+                                <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto" x-text="entry.created_at"></span>
+                            </div>
+
+                            <template x-if="entry.event === 'updated' && entry.new_values">
+                                <ul class="space-y-0.5 mt-1 pl-2">
+                                    <template x-for="(newVal, field) in entry.new_values" :key="field">
+                                        <li class="text-xs text-gray-600 dark:text-gray-400">
+                                            <span class="font-medium"
+                                                  x-text="{ name: 'Nombre', description: 'Descripción', deadline: 'Fecha límite', status: 'Estado' }[field] || field">
+                                            </span>:
+                                            <span class="line-through text-red-500 dark:text-red-400"
+                                                  x-text="translateValue(field, entry.old_values[field])"></span>
+                                            →
+                                            <span class="text-green-600 dark:text-green-400"
+                                                  x-text="translateValue(field, newVal)"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+
+                            <template x-if="entry.event === 'created' && entry.new_values">
+                                <ul class="space-y-0.5 mt-1 pl-2">
+                                    <template x-for="(val, field) in entry.new_values" :key="field">
+                                        <li class="text-xs text-gray-600 dark:text-gray-400"
+                                            x-show="val !== null && val !== ''">
+                                            <span class="font-medium"
+                                                  x-text="{ name: 'Nombre', description: 'Descripción', deadline: 'Fecha límite', status: 'Estado' }[field] || field">
+                                            </span>:
+                                            <span x-text="translateValue(field, val)"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </template>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+        </x-modal>
+
     </div>{{-- end kanbanBoard scope --}}
 
     @push('scripts')
@@ -138,6 +226,10 @@
             newTagColor: '#6366f1',
             tagColors: ['#6366f1','#ec4899','#f59e0b','#10b981','#3b82f6','#ef4444','#8b5cf6','#14b8a6'],
             csrfToken: document.querySelector('meta[name="csrf-token"]').content,
+            projectLog: [],
+            loadingProjectLog: false,
+            taskLog: [],
+            loadingTaskLog: false,
 
             init() {
                 this.initSortable();
@@ -223,6 +315,47 @@
 
             closeTask() {
                 this.activeTask = null;
+            },
+
+            async openProjectLog() {
+                this.loadingProjectLog = true;
+                this.projectLog = [];
+                this.$dispatch('open-modal', 'project-activity');
+                try {
+                    // __kanban.projectId is defined at line ~121: const __kanban = { projectId: {{ $project->id }}, ... }
+                    const res = await fetch(`/projects/${__kanban.projectId}/activity`, {
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
+                    });
+                    this.projectLog = await res.json();
+                } finally {
+                    this.loadingProjectLog = false;
+                }
+            },
+
+            async openTaskLog() {
+                if (!this.activeTask) return;
+                this.loadingTaskLog = true;
+                this.taskLog = [];
+                this.$dispatch('open-modal', 'task-activity');
+                try {
+                    const res = await fetch(`/tasks/${this.activeTask.id}/activity`, {
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': this.csrfToken },
+                    });
+                    this.taskLog = await res.json();
+                } finally {
+                    this.loadingTaskLog = false;
+                }
+            },
+
+            translateValue(field, value) {
+                if (value === null || value === undefined) return '—';
+                const enumMap = {
+                    active: 'Activo', archived: 'Archivado',
+                    backlog: 'Pendiente', in_progress: 'En progreso',
+                    testing: 'En revisión', done: 'Terminada',
+                    high: 'Alta', medium: 'Media', low: 'Baja',
+                };
+                return enumMap[value] ?? String(value);
             },
 
             async toggleSubtask(subtaskId, checkbox) {
