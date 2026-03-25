@@ -26,7 +26,7 @@
     </x-slot>
 
     {{-- Entire page content within kanbanBoard scope so modals have access --}}
-    <div x-data="kanbanBoard(@json($projectTags))" x-init="init()">
+    <div x-data="kanbanBoard()" x-init="init()">
 
         <div class="py-6">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -116,7 +116,12 @@
 
     @push('scripts')
     <script>
-    function kanbanBoard(projectTags = []) {
+    const __kanban = {
+        projectId: {{ $project->id }},
+        projectTags: {!! json_encode($projectTags, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS) !!},
+    };
+
+    function kanbanBoard() {
         return {
             activeTask: null,
             newTaskStatus: 'backlog',
@@ -126,7 +131,7 @@
             aiLoading: false,
             aiError: null,
             aiSubtasks: [],
-            projectTags: projectTags,
+            projectTags: __kanban.projectTags,
             showTagPanel: false,
             newTagName: '',
             newTagColor: '#6366f1',
@@ -343,7 +348,7 @@
 
             async createTag(name, color) {
                 if (!name.trim()) return;
-                const projectId = {{ $project->id }};
+                const projectId = __kanban.projectId;
                 const res = await fetch(`/projects/${projectId}/tags`, {
                     method: 'POST',
                     headers: {
